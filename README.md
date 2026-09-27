@@ -63,7 +63,7 @@ Timeout defaults to 300 seconds per command and `max_output_bytes` to 1 MB per s
 
 Every attempt creates `.ai/runs/<uuid>/manifest.json`, redacted stdout/stderr logs, command JSON and `summary.json`. Current command evidence lives under `.ai/evidence/`. Timestamps, exit codes, executed argv, log hashes and policy/source hashes are recorded.
 
-A new attempt invalidates older evidence immediately. Missing files, stale source/policy, changed executable modes, altered logs, interrupted attempts, failed commands and missing verification reject final completion. Final evaluation uses the same exclusive lock as execution and import. No command-evidence import API exists.
+A new attempt invalidates older evidence immediately. Missing files, stale source/policy, changed executable modes, altered logs, interrupted attempts, failed commands and missing required external evidence reject final completion. Final evaluation uses the same exclusive lock as execution and import. No command-evidence import API exists.
 
 Source binding includes tracked and untracked nonignored files. Generated run/evidence files and `.ai/workflow.json` are excluded. Git-ignored dependencies/build products are outside this snapshot. Pin dependencies and trust the runtime environment. Symlinked source paths and submodules are not supported in v1.
 
@@ -94,15 +94,15 @@ Hashes detect stale/altered evidence; they are not signatures. A local writer ca
 - `aicg approval check production_deploy`: classify an action; never execute it. Unknown actions require review. No production executor exists.
 - `aicg doctor`: check Git, policy, required documents/directories, command executables, evidence writability, generated instructions and CI. It does not execute commands or prove their correctness.
 - `aicg schema policy|command|external|verifier-input`: export JSON Schema.
-- `aicg ci generate github`: generate a fail-closed GitHub Actions integration.
+- `aicg ci generate github`: generate GitHub Actions integration that follows the verifier requirement in `policy.yaml`.
 
 ## GitHub Actions
 
 Generated consumer workflows require the repository variable `AICG_INSTALL_SPEC` to point at a trusted immutable wheel URL or pinned package source. No registry release is assumed. Review installation inputs and configure the project's build dependencies before gate execution.
 
-Integrate a trusted verifier after request export and before `gate final`. Without current verifier evidence, the workflow deliberately fails. Configure branch protection to require that final gate and protect workflow/policy changes from the implementation agent. Never grant secrets to untrusted pull-request jobs. The template runs on pushes and pull requests, uses read-only repository permissions, and uploads evidence with `always()`.
+When `independent_verification_required` is true, integrate a trusted verifier after request export and before `gate final`; missing current-run evidence fails closed. When false, the final gate checks configured mechanical requirements only. This repository uses that mode because no trusted reviewer/provider identity is available. Its protected `main` requires the `gate` status and no PR approval. A green run proves configured checks passed, not independent review or production readiness. Never grant secrets to untrusted pull-request jobs. The template runs on pushes and pull requests, uses read-only repository permissions, and uploads evidence with `always()`.
 
-This repository includes its own source-install validation workflow. On 2026-09-27, GitHub Actions run [36311313247](https://github.com/himitsuomom/ai-coding-governance-platform/actions/runs/36311313247) on commit `ed0937d` passed installation, policy validation, all six configured gates, the six example scenarios, and dependency audit. Runtime validation is required by `policy.yaml`; `python examples/scenarios.py` completed with exit code 0. The final gate correctly rejected missing independent-verifier evidence for that run. Branch protection remains UNVERIFIED.
+This repository runs clean installation, policy validation, all configured gates, example scenarios and dependency audit in GitHub Actions. `policy.yaml` requires build, tests, typecheck, lint, security and runtime validation; it does not require a separate verifier. Branch protection requires the `gate` check. Check the Actions page for current run evidence.
 
 ## Validation
 

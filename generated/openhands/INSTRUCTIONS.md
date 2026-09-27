@@ -1,7 +1,7 @@
 # GENERATED FILE — DO NOT EDIT DIRECTLY
 
 Adapter: openhands
-Source fingerprint: a803166e9f018b6575370ac716f432a55462bde55416f10dbbf6d76064634a21
+Source fingerprint: 081b503081b9ee76b307013dc078f28cb55d0fa504d3b82b9545d78700338f5c
 
 Use these instructions in the OpenHands agent context.
 
@@ -16,7 +16,7 @@ Use these instructions in the OpenHands agent context.
 - configured lint/typecheck が成功
 - acceptance criteria が検証済み
 - required runtime evidence が存在
-- independent verifier が PASS
+- `policy.yaml` で要求した場合は independent verifier が PASS
 - security findings が policy 上限以内
 - 未承認の mock / placeholder / hard-coded production data がない
 
@@ -84,7 +84,7 @@ Coding Agent 単独で `DONE` / `PRODUCTION_READY` と判定してはならな�
 
 ## Machine-enforced requirements
 
-Run `aicg policy validate`, `aicg gate run`, independent verification, then `aicg gate final`.
+Run `aicg policy validate`, `aicg gate run`, then `aicg gate final`.
 A model's self-assessment is never completion evidence.
 
 ```json
@@ -110,7 +110,10 @@ A model's self-assessment is never completion evidence.
       "src",
       "tests"
     ],
-    "runtime": "",
+    "runtime": [
+      "python",
+      "examples/scenarios.py"
+    ],
     "security": [
       "python",
       "-m",
@@ -132,9 +135,9 @@ A model's self-assessment is never completion evidence.
   },
   "completion": {
     "build_required": true,
-    "independent_verification_required": true,
+    "independent_verification_required": false,
     "lint_required": true,
-    "runtime_validation_required": false,
+    "runtime_validation_required": true,
     "tests_required": true,
     "typecheck_required": true
   },

@@ -6,6 +6,8 @@ YAML uses safe loading, duplicate-key rejection, strict types and unknown-field 
 
 Subprocesses receive argv with shell=False, bounded execution time, capped captured output and a minimal environment. Parent environment values with secret-like names are redacted before persistence. Arbitrary unknown secrets printed by trusted programs cannot be reliably recognized: never run with production secrets. No remote command ingestion or credential API exists.
 
-SHA-256 binds evidence to source, policy and logs, detecting accidental changes and stale evidence. Hashes are NOT signatures: a local writer can forge files or change the tool. Branch protection, external trusted verifier storage and protected CI workflows are necessary for adversarial enforcement. Manual import records claimed reviewer identity; v1 cannot authenticate that identity.
+SHA-256 binds evidence to source, policy and logs, detecting accidental changes and stale evidence. Hashes are NOT signatures: a local writer can forge files or change the tool. Manual verifier import records claimed reviewer identity; v1 cannot authenticate that identity.
+
+This repository sets `independent_verification_required: false` because no trusted reviewer or provider identity is available. CI still requires configured build, test, typecheck, lint, security and runtime checks. A passing result means those mechanical gates passed; it does not mean an independent review or production-readiness assessment occurred. Enable independent verification before relying on it as a trust boundary.
 
 Security tests cover traversal, symlinks, malformed/duplicate YAML, type confusion, stale evidence, failed commands, timeout, redaction and forged command records. Bandit scans source; pip-audit scans installed dependency vulnerabilities. Neither proves absence of vulnerabilities.

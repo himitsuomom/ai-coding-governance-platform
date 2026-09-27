@@ -16,8 +16,8 @@ OUTPUTS = {"codex": "generated/codex/AGENTS.md", "openhands": "generated/openhan
 CI_PATH = ".github/workflows/aicg.yml"
 
 
-def ci_content() -> bytes:
-    return b'''# GENERATED FILE - DO NOT EDIT DIRECTLY
+def ci_content(require_verifier: bool = True) -> bytes:
+    content = b'''# GENERATED FILE - DO NOT EDIT DIRECTLY
 name: AI governance gate
 on: [push, pull_request, workflow_dispatch]
 permissions:
@@ -39,10 +39,7 @@ jobs:
           python -m pip install "$AICG_INSTALL_SPEC"
       - run: aicg policy validate
       - run: aicg gate run
-      - name: Export independent verification input
-        run: aicg verifier request > .ai/runs/verifier-input.json
-      # Integrate a trusted external verifier here; import its context-bound report.
-      # Without that integration, final correctly rejects missing verification.
+      # VERIFIER_STEP
       - run: aicg gate final
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         if: always()
@@ -53,6 +50,11 @@ jobs:
             .ai/evidence/
           include-hidden-files: true
 '''
+    verifier_step = b'''      - name: Export independent verification input
+        run: aicg verifier request > .ai/runs/verifier-input.json
+      # Import a trusted external report before the final gate.
+'''
+    return content.replace(b"      # VERIFIER_STEP\n", verifier_step if require_verifier else b"")
 
 
 def init_repo(root: Path) -> dict:
@@ -83,10 +85,12 @@ def compiled_files(root: Path, policy: Policy) -> dict[str, bytes]:
     for adapter in policy.adapters:
         extra = ("Read this file as the repository instruction entry point."
                  if adapter in {"codex", "generic"} else "Use these instructions in the OpenHands agent context.")
+        verifier_step = (", independent verification"
+                         if policy.completion.independent_verification_required else "")
         text = (f"# GENERATED FILE — DO NOT EDIT DIRECTLY\n\nAdapter: {adapter}\n"
                 f"Source fingerprint: {fingerprint}\n\n{extra}\n\n{master}\n\n"
                 "## Machine-enforced requirements\n\n"
-                "Run `aicg policy validate`, `aicg gate run`, independent verification, then `aicg gate final`.\n"
+                f"Run `aicg policy validate`, `aicg gate run`{verifier_step}, then `aicg gate final`.\n"
                 "A model's self-assessment is never completion evidence.\n\n```json\n"
                 + json_bytes(policy.model_dump()).decode() + "```\n")
         result[OUTPUTS[adapter]] = text.encode()
@@ -98,7 +102,9 @@ def compile_policy(root: Path, policy: Policy) -> dict:
 
 
 def generate_ci(root: Path) -> dict:
-    return {"created": create_files(root, {CI_PATH: ci_content()})}
+    policy = load_policy(root)
+    content = ci_content(policy.completion.independent_verification_required)
+    return {"created": create_files(root, {CI_PATH: content})}
 
 
 def doctor(root: Path) -> dict:

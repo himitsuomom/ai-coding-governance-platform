@@ -45,6 +45,15 @@ def test_missing_verifier(repo):
     assert final_gate(repo, policy)["gates"]["verifier"] == "FAIL"
 
 
+def test_optional_verifier_does_not_block_successful_required_gates(repo):
+    policy = configure(repo, completion={"independent_verification_required": False})
+    run = run_gates(repo, policy)
+    assert run["status"] == "PASS"
+    result = final_gate(repo, policy)
+    assert result["status"] == "PASS"
+    assert result["gates"]["verifier"] == "NOT_REQUIRED"
+
+
 @pytest.mark.parametrize("report,expected", [("REPAIR_REQUIRED", "REJECT"),
                                             ("INSUFFICIENT_EVIDENCE", "REJECT"),
                                             ("HUMAN_REVIEW_REQUIRED", "HUMAN_REVIEW_REQUIRED")])
