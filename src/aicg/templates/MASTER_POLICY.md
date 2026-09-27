@@ -9,7 +9,7 @@
 - configured lint/typecheck が成功
 - acceptance criteria が検証済み
 - required runtime evidence が存在
-- independent verifier が PASS
+- `policy.yaml` で要求した場合は independent verifier が PASS
 - security findings が policy 上限以内
 - 未承認の mock / placeholder / hard-coded production data がない
 

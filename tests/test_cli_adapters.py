@@ -118,6 +118,7 @@ def test_ci(repo):
     text = (repo / ".github/workflows/aicg.yml").read_text()
     for command in ("aicg policy validate", "aicg gate run", "aicg gate final"):
         assert command in text
+    assert "aicg verifier request" in text
     for action in (
         "actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1",
         "actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97",
@@ -128,6 +129,22 @@ def test_ci(repo):
     assert "contents: read" in text
     assert "on: [push, pull_request, workflow_dispatch]" in text
     assert "runs-on: ubuntu-24.04" in text
+
+
+def test_optional_verifier_is_omitted_from_generated_instructions_and_ci(repo):
+    policy = configure(repo, completion={"independent_verification_required": False})
+    files = compile_policy(repo, policy)["created"]
+    assert files
+    instruction = (repo / "generated/codex/AGENTS.md").read_text()
+    assert "Run `aicg policy validate`, `aicg gate run`, then `aicg gate final`." in instruction
+    assert "Run `aicg policy validate`, `aicg gate run`, independent verification" not in instruction
+
+    workflow = repo / ".github/workflows/aicg.yml"
+    workflow.unlink()
+    generate_ci(repo)
+    text = workflow.read_text()
+    assert "aicg gate final" in text
+    assert "aicg verifier request" not in text
 
 
 def test_cli_exit_codes(repo):

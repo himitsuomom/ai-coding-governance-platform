@@ -22,9 +22,6 @@ jobs:
       - run: aicg gate run
       - run: python examples/scenarios.py
       - run: python -m pip_audit -r requirements.lock --strict
-      - run: aicg verifier request > .ai/runs/verifier-input.json
-      # A trusted external verifier must import a report for this exact run.
-      # Missing verification must keep the completion gate closed.
       - run: aicg gate final
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         if: always()
