@@ -102,7 +102,7 @@ Generated consumer workflows require the repository variable `AICG_INSTALL_SPEC`
 
 Integrate a trusted verifier after request export and before `gate final`. Without current verifier evidence, the workflow deliberately fails. Configure branch protection to require that final gate and protect workflow/policy changes from the implementation agent. Never grant secrets to untrusted pull-request jobs. The template uses `pull_request`, read-only repository permissions and evidence upload with `always()`.
 
-This repository includes its own source-install validation workflow. Generated workflow correctness is tested locally. Actual GitHub execution and branch protection are UNVERIFIED until a remote repository runs and configures them.
+This repository includes its own source-install validation workflow. On 2026-09-27, GitHub Actions run [36310852688](https://github.com/himitsuomom/ai-coding-governance-platform/actions/runs/36310852688) passed installation, policy validation, all six local gates, the six example scenarios, and dependency audit. The final gate correctly rejected missing independent-verifier evidence. Branch protection remains UNVERIFIED.
 
 ## Validation
 

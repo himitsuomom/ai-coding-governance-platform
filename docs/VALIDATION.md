@@ -6,6 +6,8 @@ The authoritative local run is `.ai/evidence/current.json`; its UUID selects the
 
 A separate agent performed read-only review and reproduced defects independently. Its findings were repaired and covered by regression tests. Review narratives alone are not imported as a PASS report. Actual current-run verifier evidence is a separate artifact.
 
-Pending external verification: GitHub Actions on Linux, protected branch enforcement, authenticated reviewer identity and any production deployment suitability. No production deployment, secrets access or database action was performed. The local tool is not a sandbox or a tamper-proof attestation service.
+GitHub Actions run [36310852688](https://github.com/himitsuomom/ai-coding-governance-platform/actions/runs/36310852688) on 2026-09-27 passed clean dependency installation, policy validation, all six configured gates, all six example scenarios, and the dependency audit on Ubuntu/Python 3.12. Its final gate rejected because `.ai/evidence/verifier.json` was absent for that run, as required by fail-closed policy. The run uploaded its evidence artifact.
+
+Pending external verification: trusted verifier integration, protected branch enforcement, authenticated reviewer identity and any production deployment suitability. No production deployment, secrets access or database action was performed. The local tool is not a sandbox or a tamper-proof attestation service.
 
 Policy/security references consulted: Python subprocess documentation (https://docs.python.org/3/library/subprocess.html) for argv, env and timeout semantics; Pydantic strict-mode documentation (https://pydantic.dev/docs/validation/latest/concepts/strict_mode/) for input validation. Exact behavior is covered by tests, including Literal bool/int edge cases.
