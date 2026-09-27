@@ -1,0 +1,35 @@
+version: 1
+
+completion:
+  build_required: true
+  tests_required: true
+  typecheck_required: false
+  lint_required: false
+  runtime_validation_required: false
+  independent_verification_required: true
+
+security:
+  max_critical_findings: 0
+  max_high_findings: 0
+  allow_production_secret_access: false
+  allow_production_db_write: false
+  allow_force_push: false
+  allow_gate_disable: false
+
+human_approval:
+  production_deploy: true
+  destructive_migration: true
+  auth_boundary_change: true
+  disable_required_gate: true
+
+commands:
+  build: ""
+  test: ""
+  typecheck: ""
+  lint: ""
+  security: ""
+
+evidence:
+  verifier_result: ".ai/evidence/verifier.json"
+  runtime_result: ".ai/evidence/runtime.json"
+  security_result: ".ai/evidence/security.json"

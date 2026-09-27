@@ -1,0 +1,76 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "run_id": {
+      "pattern": "^[a-f0-9]{32}$",
+      "title": "Run Id",
+      "type": "string"
+    },
+    "policy_hash": {
+      "pattern": "^[a-f0-9]{64}$",
+      "title": "Policy Hash",
+      "type": "string"
+    },
+    "source_hash": {
+      "pattern": "^[a-f0-9]{64}$",
+      "title": "Source Hash",
+      "type": "string"
+    },
+    "original_requirement": {
+      "title": "Original Requirement",
+      "type": "string"
+    },
+    "acceptance_criteria": {
+      "title": "Acceptance Criteria",
+      "type": "string"
+    },
+    "git_diff": {
+      "title": "Git Diff",
+      "type": "string"
+    },
+    "documents": {
+      "additionalProperties": {
+        "type": "string"
+      },
+      "title": "Documents",
+      "type": "object"
+    },
+    "evidence": {
+      "additionalProperties": {
+        "additionalProperties": true,
+        "type": "object"
+      },
+      "title": "Evidence",
+      "type": "object"
+    },
+    "source_files": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Source Files",
+      "type": "array"
+    },
+    "source_snapshot": {
+      "additionalProperties": {
+        "additionalProperties": true,
+        "type": "object"
+      },
+      "title": "Source Snapshot",
+      "type": "object"
+    }
+  },
+  "required": [
+    "run_id",
+    "policy_hash",
+    "source_hash",
+    "original_requirement",
+    "acceptance_criteria",
+    "git_diff",
+    "documents",
+    "evidence",
+    "source_files",
+    "source_snapshot"
+  ],
+  "title": "VerifierInput",
+  "type": "object"
+}

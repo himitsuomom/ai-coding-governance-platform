@@ -1,0 +1,126 @@
+{
+  "$defs": {
+    "VerifierReport": {
+      "additionalProperties": false,
+      "properties": {
+        "status": {
+          "enum": [
+            "PASS",
+            "REPAIR_REQUIRED",
+            "HUMAN_REVIEW_REQUIRED",
+            "INSUFFICIENT_EVIDENCE"
+          ],
+          "title": "Status",
+          "type": "string"
+        },
+        "failed_criteria": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Failed Criteria",
+          "type": "array"
+        },
+        "architecture_concerns": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Architecture Concerns",
+          "type": "array"
+        },
+        "security_concerns": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Security Concerns",
+          "type": "array"
+        },
+        "missing_evidence": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Missing Evidence",
+          "type": "array"
+        },
+        "repair_instructions": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Repair Instructions",
+          "type": "array"
+        }
+      },
+      "required": [
+        "status",
+        "failed_criteria",
+        "architecture_concerns",
+        "security_concerns",
+        "missing_evidence",
+        "repair_instructions"
+      ],
+      "title": "VerifierReport",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "run_id": {
+      "pattern": "^[a-f0-9]{32}$",
+      "title": "Run Id",
+      "type": "string"
+    },
+    "policy_hash": {
+      "pattern": "^[a-f0-9]{64}$",
+      "title": "Policy Hash",
+      "type": "string"
+    },
+    "source_hash": {
+      "pattern": "^[a-f0-9]{64}$",
+      "title": "Source Hash",
+      "type": "string"
+    },
+    "schema_version": {
+      "const": 1,
+      "default": 1,
+      "title": "Schema Version",
+      "type": "integer"
+    },
+    "kind": {
+      "enum": [
+        "verifier",
+        "runtime"
+      ],
+      "title": "Kind",
+      "type": "string"
+    },
+    "producer": {
+      "const": "external",
+      "default": "external",
+      "title": "Producer",
+      "type": "string"
+    },
+    "reviewer": {
+      "maxLength": 200,
+      "minLength": 1,
+      "title": "Reviewer",
+      "type": "string"
+    },
+    "recorded_at": {
+      "title": "Recorded At",
+      "type": "string"
+    },
+    "report": {
+      "$ref": "#/$defs/VerifierReport"
+    }
+  },
+  "required": [
+    "run_id",
+    "policy_hash",
+    "source_hash",
+    "kind",
+    "reviewer",
+    "recorded_at",
+    "report"
+  ],
+  "title": "ExternalEvidence",
+  "type": "object"
+}

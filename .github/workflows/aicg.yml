@@ -1,0 +1,35 @@
+name: Platform validation and evidence gate
+on:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  gate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: python -m pip install -r requirements-dev.lock
+      - run: python -m pip install --no-deps .
+      - run: aicg policy validate
+      - run: aicg gate run
+      - run: python examples/scenarios.py
+      - run: python -m pip_audit -r requirements.lock --strict
+      - run: aicg verifier request > .ai/runs/verifier-input.json
+      # A trusted external verifier must import a report for this exact run.
+      # Missing verification must keep the completion gate closed.
+      - run: aicg gate final
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: platform-evidence
+          path: |
+            .ai/evidence/
+            .ai/runs/
+          include-hidden-files: true

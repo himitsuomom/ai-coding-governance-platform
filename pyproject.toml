@@ -1,0 +1,33 @@
+[build-system]
+requires = ["setuptools>=77"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "ai-coding-governance-platform"
+version = "0.1.0"
+description = "Deterministic governance and evidence gates for coding agents"
+readme = "README.md"
+requires-python = ">=3.12"
+license = "MIT"
+dependencies = ["pydantic>=2.10,<3", "PyYAML>=6.0.2,<7"]
+
+[project.optional-dependencies]
+dev = ["pytest>=8,<10", "ruff>=0.11", "mypy>=1.15", "types-PyYAML", "build>=1.2", "bandit>=1.8", "pip-audit>=2.9", "setuptools>=77", "wheel>=0.45"]
+
+[project.scripts]
+aicg = "aicg.cli:main"
+
+[tool.setuptools.package-data]
+aicg = ["templates/**/*", "templates/.*", "templates/.ai/*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-ra"
+
+[tool.ruff]
+target-version = "py312"
+line-length = 110
+
+[tool.mypy]
+python_version = "3.12"
+check_untyped_defs = true

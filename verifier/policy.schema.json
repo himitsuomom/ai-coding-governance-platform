@@ -1,0 +1,309 @@
+{
+  "$defs": {
+    "Approval": {
+      "additionalProperties": false,
+      "properties": {
+        "production_deploy": {
+          "title": "Production Deploy",
+          "type": "boolean"
+        },
+        "destructive_migration": {
+          "title": "Destructive Migration",
+          "type": "boolean"
+        },
+        "auth_boundary_change": {
+          "title": "Auth Boundary Change",
+          "type": "boolean"
+        },
+        "disable_required_gate": {
+          "title": "Disable Required Gate",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "production_deploy",
+        "destructive_migration",
+        "auth_boundary_change",
+        "disable_required_gate"
+      ],
+      "title": "Approval",
+      "type": "object"
+    },
+    "Commands": {
+      "additionalProperties": false,
+      "properties": {
+        "build": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            }
+          ],
+          "title": "Build"
+        },
+        "test": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            }
+          ],
+          "title": "Test"
+        },
+        "typecheck": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            }
+          ],
+          "title": "Typecheck"
+        },
+        "lint": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            }
+          ],
+          "title": "Lint"
+        },
+        "security": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            }
+          ],
+          "title": "Security"
+        },
+        "runtime": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            }
+          ],
+          "default": "",
+          "title": "Runtime"
+        }
+      },
+      "required": [
+        "build",
+        "test",
+        "typecheck",
+        "lint",
+        "security"
+      ],
+      "title": "Commands",
+      "type": "object"
+    },
+    "Completion": {
+      "additionalProperties": false,
+      "properties": {
+        "build_required": {
+          "title": "Build Required",
+          "type": "boolean"
+        },
+        "tests_required": {
+          "title": "Tests Required",
+          "type": "boolean"
+        },
+        "typecheck_required": {
+          "title": "Typecheck Required",
+          "type": "boolean"
+        },
+        "lint_required": {
+          "title": "Lint Required",
+          "type": "boolean"
+        },
+        "runtime_validation_required": {
+          "title": "Runtime Validation Required",
+          "type": "boolean"
+        },
+        "independent_verification_required": {
+          "title": "Independent Verification Required",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "build_required",
+        "tests_required",
+        "typecheck_required",
+        "lint_required",
+        "runtime_validation_required",
+        "independent_verification_required"
+      ],
+      "title": "Completion",
+      "type": "object"
+    },
+    "EvidencePaths": {
+      "additionalProperties": false,
+      "properties": {
+        "verifier_result": {
+          "title": "Verifier Result",
+          "type": "string"
+        },
+        "runtime_result": {
+          "title": "Runtime Result",
+          "type": "string"
+        },
+        "security_result": {
+          "title": "Security Result",
+          "type": "string"
+        }
+      },
+      "required": [
+        "verifier_result",
+        "runtime_result",
+        "security_result"
+      ],
+      "title": "EvidencePaths",
+      "type": "object"
+    },
+    "Security": {
+      "additionalProperties": false,
+      "properties": {
+        "max_critical_findings": {
+          "minimum": 0,
+          "title": "Max Critical Findings",
+          "type": "integer"
+        },
+        "max_high_findings": {
+          "minimum": 0,
+          "title": "Max High Findings",
+          "type": "integer"
+        },
+        "allow_production_secret_access": {
+          "const": false,
+          "title": "Allow Production Secret Access",
+          "type": "boolean"
+        },
+        "allow_production_db_write": {
+          "const": false,
+          "title": "Allow Production Db Write",
+          "type": "boolean"
+        },
+        "allow_force_push": {
+          "const": false,
+          "title": "Allow Force Push",
+          "type": "boolean"
+        },
+        "allow_gate_disable": {
+          "const": false,
+          "title": "Allow Gate Disable",
+          "type": "boolean"
+        },
+        "required": {
+          "default": true,
+          "title": "Required",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "max_critical_findings",
+        "max_high_findings",
+        "allow_production_secret_access",
+        "allow_production_db_write",
+        "allow_force_push",
+        "allow_gate_disable"
+      ],
+      "title": "Security",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "version": {
+      "const": 1,
+      "title": "Version",
+      "type": "integer"
+    },
+    "completion": {
+      "$ref": "#/$defs/Completion"
+    },
+    "security": {
+      "$ref": "#/$defs/Security"
+    },
+    "human_approval": {
+      "$ref": "#/$defs/Approval"
+    },
+    "commands": {
+      "$ref": "#/$defs/Commands"
+    },
+    "evidence": {
+      "$ref": "#/$defs/EvidencePaths"
+    },
+    "adapters": {
+      "default": [
+        "codex",
+        "openhands",
+        "generic"
+      ],
+      "items": {
+        "enum": [
+          "codex",
+          "openhands",
+          "generic"
+        ],
+        "type": "string"
+      },
+      "title": "Adapters",
+      "type": "array"
+    },
+    "timeout_seconds": {
+      "default": 300,
+      "maximum": 86400,
+      "minimum": 1,
+      "title": "Timeout Seconds",
+      "type": "integer"
+    },
+    "max_output_bytes": {
+      "default": 1000000,
+      "maximum": 10000000,
+      "minimum": 1024,
+      "title": "Max Output Bytes",
+      "type": "integer"
+    }
+  },
+  "required": [
+    "version",
+    "completion",
+    "security",
+    "human_approval",
+    "commands",
+    "evidence"
+  ],
+  "title": "Policy",
+  "type": "object"
+}
