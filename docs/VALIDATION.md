@@ -6,7 +6,7 @@ The authoritative local run is `.ai/evidence/current.json`; its UUID selects the
 
 A separate agent performed read-only review and reproduced defects independently. Its findings were repaired and covered by regression tests. Review narratives alone are not imported as a PASS report. Actual current-run verifier evidence is a separate artifact.
 
-GitHub Actions run [36310852688](https://github.com/himitsuomom/ai-coding-governance-platform/actions/runs/36310852688) on 2026-09-27 passed clean dependency installation, policy validation, all six configured gates, all six example scenarios, and the dependency audit on Ubuntu/Python 3.12. Its final gate rejected because `.ai/evidence/verifier.json` was absent for that run, as required by fail-closed policy. The run uploaded its evidence artifact.
+GitHub Actions run [36311313247](https://github.com/himitsuomom/ai-coding-governance-platform/actions/runs/36311313247) on 2026-09-27 passed clean dependency installation, policy validation, all six configured gates, all six example scenarios, and the dependency audit on Ubuntu/Python 3.12. The required runtime command, `python examples/scenarios.py`, exited 0 and its evidence is bound to that run's policy/source hashes. The final gate rejected because `.ai/evidence/verifier.json` was absent for that run, as required by fail-closed policy. The run uploaded its evidence artifact. Branch protection remains unverified.
 
 Pending external verification: trusted verifier integration, protected branch enforcement, authenticated reviewer identity and any production deployment suitability. No production deployment, secrets access or database action was performed. The local tool is not a sandbox or a tamper-proof attestation service.
 

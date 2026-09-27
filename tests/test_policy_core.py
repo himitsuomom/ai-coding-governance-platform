@@ -82,6 +82,9 @@ def test_workflow(repo):
 
 
 @pytest.mark.parametrize("action", ["production_deploy", "destructive_migration", "auth_boundary_change",
-                                  "disable_required_gate", "production_secret_access", "unknown"])
+                                  "disable_required_gate", "production_secret_access",
+                                  "production_db_write", "unknown"])
 def test_protected_actions(repo, action):
-    assert action_check(load_policy(repo), action)["status"] == "HUMAN_REVIEW_REQUIRED"
+    result = action_check(load_policy(repo), action)
+    assert result["status"] == "HUMAN_REVIEW_REQUIRED"
+    assert result["executed"] is False

@@ -1,4 +1,5 @@
 import json
+import subprocess
 import sys
 
 import pytest
@@ -15,6 +16,7 @@ def test_all_pass(repo):
     policy = load_policy(repo)
     run = run_gates(repo, policy)
     assert run["status"] == "PASS"
+    assert read_json(repo, f".ai/runs/{run['run_id']}/summary.json") == run
     external(repo)
     assert final_gate(repo, policy)["status"] == "PASS"
     assert final_gate(repo, policy) == final_gate(repo, policy)
@@ -123,9 +125,11 @@ def test_stale_tampered_missing_rejected(repo, mutation):
 def test_new_run_invalidates_old_verifier(repo):
     policy = load_policy(repo)
     first = run_gates(repo, policy)
-    external(repo)
+    old_verifier = external(repo)
     second = run_gates(repo, policy)
     assert first["run_id"] != second["run_id"]
+    with pytest.raises(GovernanceError, match="not for the current source/policy/run"):
+        import_evidence(repo, policy, old_verifier)
     assert final_gate(repo, policy)["status"] == "REJECT"
 
 
@@ -188,3 +192,29 @@ def test_external_contract_and_input(repo):
     file.write_text(json.dumps(data))
     with pytest.raises(GovernanceError):
         import_evidence(repo, policy, file)
+
+
+def test_verifier_request_includes_all_six_gate_evidence(repo):
+    commands = {gate: [sys.executable, "-c", "print('passed')"]
+                for gate in ("build", "test", "typecheck", "lint", "runtime")}
+    commands["security"] = [sys.executable, "-c", 'print(\'{"critical":0,"high":0}\')']
+    policy = configure(repo, completion={"runtime_validation_required": True}, commands=commands)
+    assert run_gates(repo, policy)["status"] == "PASS"
+    evidence = verifier_request(repo, policy)["evidence"]
+    expected = {"build", "test", "typecheck", "lint", "security", "runtime"}
+    assert set(evidence) == expected
+    assert all(evidence[name]["kind"] == name and evidence[name]["status"] == "PASS"
+               for name in expected)
+
+
+def test_verifier_request_includes_tracked_working_tree_diff(repo):
+    subprocess.run(["git", "-C", str(repo), "add", "PROJECT_SPEC.md"], check=True)
+    subprocess.run(["git", "-C", str(repo), "-c", "user.name=Test", "-c",
+                    "user.email=test@example.com", "commit", "-m", "baseline"],
+                   check=True, capture_output=True, text=True)
+    spec = repo / "PROJECT_SPEC.md"
+    spec.write_text(spec.read_text() + "\nTracked change for verifier review.\n")
+    policy = load_policy(repo)
+    assert run_gates(repo, policy)["status"] == "PASS"
+    request = verifier_request(repo, policy)
+    assert "Tracked change for verifier review." in request["git_diff"]

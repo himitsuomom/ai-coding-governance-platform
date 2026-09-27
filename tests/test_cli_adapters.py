@@ -1,9 +1,10 @@
 import json
+import shutil
 import subprocess
 import sys
 
 import pytest
-from conftest import external
+from conftest import configure, external
 
 from aicg.adapters import compile_policy, doctor, generate_ci, init_repo
 from aicg.core import GovernanceError
@@ -32,13 +33,84 @@ def test_compiler_and_doctor(repo):
     result = compile_policy(repo, policy)
     assert len(result["created"]) == 3
     assert not compile_policy(repo, policy)["created"]
-    for file in result["created"]:
-        assert "GENERATED FILE — DO NOT EDIT DIRECTLY" in (repo / file).read_text()
+    expected = {
+        "generated/codex/AGENTS.md": "codex",
+        "generated/openhands/INSTRUCTIONS.md": "openhands",
+        "generated/generic/AGENTS.md": "generic",
+    }
+    assert set(result["created"]) == set(expected)
+    for file, adapter in expected.items():
+        text = (repo / file).read_text()
+        assert "GENERATED FILE — DO NOT EDIT DIRECTLY" in text
+        assert f"Adapter: {adapter}" in text
+        assert "Machine-enforced requirements" in text
     assert doctor(repo)["status"] == "PASS"
     (repo / "MASTER_POLICY.md").write_text("changed master")
     assert doctor(repo)["status"] == "REJECT"
     with pytest.raises(GovernanceError):
         compile_policy(repo, policy)
+
+
+@pytest.mark.parametrize(("artifact", "directory"), [
+    (".ai/ARCHITECTURE.md", False), (".ai/SECURITY.md", False),
+    (".ai/TESTING.md", False), (".ai/INVARIANTS.md", False),
+    (".ai/specs", True), (".ai/adr", True), (".ai/known-issues", True),
+])
+def test_doctor_reports_missing_project_memory_artifact(repo, artifact, directory):
+    compile_policy(repo, load_policy(repo))
+    path = repo / artifact
+    if directory:
+        for child in path.iterdir():
+            child.unlink()
+        path.rmdir()
+    else:
+        path.unlink()
+    result = doctor(repo)
+    assert result["status"] == "REJECT"
+    assert any(artifact in issue for issue in result["issues"])
+
+
+@pytest.mark.parametrize(("missing", "issue"), [
+    ("git", "Git repository missing"),
+    ("docs", "missing/unsafe artifact: PROJECT_SPEC.md"),
+    ("command", "command not found: build: /definitely-missing/aicg"),
+    ("ci", "CI configuration missing: .github/workflows/aicg.yml"),
+])
+def test_doctor_reports_missing_readiness_inputs(repo, missing, issue):
+    if missing == "git":
+        shutil.rmtree(repo / ".git")
+    elif missing == "docs":
+        (repo / "PROJECT_SPEC.md").unlink()
+    elif missing == "command":
+        compile_policy(repo, configure(repo, commands={"build": ["/definitely-missing/aicg"]}))
+    else:
+        (repo / ".github/workflows/aicg.yml").unlink()
+    result = doctor(repo)
+    assert result["status"] == "REJECT"
+    assert issue in result["issues"]
+
+
+@pytest.mark.parametrize("policy_state", ["missing", "invalid"])
+def test_doctor_reports_missing_or_invalid_policy(repo, policy_state):
+    policy = repo / "policy.yaml"
+    if policy_state == "missing":
+        policy.unlink()
+    else:
+        policy.write_text("invalid: true\n")
+    result = doctor(repo)
+    assert result["status"] == "REJECT"
+    assert any(issue.startswith("policy invalid:") for issue in result["issues"])
+
+
+@pytest.mark.parametrize("evidence_state", ["missing", "not-directory"])
+def test_doctor_reports_unavailable_evidence_directory(repo, evidence_state):
+    evidence = repo / ".ai/evidence"
+    shutil.rmtree(evidence)
+    if evidence_state == "not-directory":
+        evidence.write_text("blocks the evidence directory")
+    result = doctor(repo)
+    assert result["status"] == "REJECT"
+    assert any(issue.startswith("evidence not writable:") for issue in result["issues"])
 
 
 def test_ci(repo):
@@ -69,6 +141,17 @@ def test_cli_exit_codes(repo):
     result = cli(repo, "policy", "validate")
     assert result.returncode == 2
     assert json.loads(result.stderr)["status"] == "ERROR"
+
+
+def test_cli_dry_run_prints_planned_argv_without_running_it(repo):
+    command = [sys.executable, "-c", "open('sentinel','w').write('ran')"]
+    configure(repo, commands={"build": command})
+    result = cli(repo, "gate", "run", "--dry-run")
+    assert result.returncode == 0
+    output = json.loads(result.stdout)
+    assert output["dry_run"] is True
+    assert output["commands"]["build"] == command
+    assert not (repo / "sentinel").exists()
 
 
 @pytest.mark.parametrize("kind", ["policy", "command", "external", "verifier-input"])
