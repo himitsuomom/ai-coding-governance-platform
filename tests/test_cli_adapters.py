@@ -126,6 +126,8 @@ def test_ci(repo):
         assert action in text
     assert "pull_request_target" not in text
     assert "contents: read" in text
+    assert "on: [push, pull_request, workflow_dispatch]" in text
+    assert "runs-on: ubuntu-24.04" in text
 
 
 def test_cli_exit_codes(repo):

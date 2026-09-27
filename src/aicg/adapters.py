@@ -19,12 +19,12 @@ CI_PATH = ".github/workflows/aicg.yml"
 def ci_content() -> bytes:
     return b'''# GENERATED FILE - DO NOT EDIT DIRECTLY
 name: AI governance gate
-on: [pull_request, workflow_dispatch]
+on: [push, pull_request, workflow_dispatch]
 permissions:
   contents: read
 jobs:
   gate:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 30
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
