@@ -2,7 +2,7 @@
 
 - Independent reviewer identity is a claimed string, not an authenticated attestation. Protected CI administration is required.
 - The runner is not a sandbox; trusted policy commands have the local OS account's file/network access.
-- Ignored files and dependencies are not part of source hashing. Pin dependencies and protect the environment.
+- Ignored files and dependencies are not part of source hashing. Pin dependencies and protect the environment. Pre-existing ignored application inputs used by configured commands are not run-bound; later changes to those inputs do not invalidate evidence. Do not rely on ignored application files as gate inputs. CI starts from a fresh candidate snapshot, but candidate code and any files it creates remain untrusted.
 - Git submodules, symlinked source and Windows execution are unsupported in v1.
 - Concurrent hostile filesystem mutations by a local writer cannot be comprehensively prevented by a userspace CLI; hashes and locks defend normal stale/concurrent operation.
 - Default initialization intentionally has empty required commands and project-document TODOs. It must reject completion until configured.
