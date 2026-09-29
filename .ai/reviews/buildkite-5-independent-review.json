@@ -1,0 +1,48 @@
+{
+  "schema_version": 1,
+  "type": "independent-review-memo",
+  "status": "INSUFFICIENT_EVIDENCE",
+  "binding": {
+    "repository": "himitsuomom/ai-coding-governance-platform",
+    "pull_request": 6,
+    "branch": "docs/verifier-gate-record-363131",
+    "source_commit": "d5e57ab05419c1e098e6a71bb06fe6826fc06602",
+    "buildkite_pipeline": "aicg-trusted-gate",
+    "build_number": 5,
+    "build_url": "https://buildkite.com/himitsuomom/aicg-trusted-gate/builds/5",
+    "step": "🛡️ AICG sandboxed checks",
+    "job_id": "01a0e7f0-b358-4f60-99e1-99624677acdf",
+    "aicg_run_id_seen_in_artifact_paths": "b02bf5cc902d4692bc536413946e806d"
+  },
+  "source_and_policy": {
+    "source_commit_sha": "d5e57ab05419c1e098e6a71bb06fe6826fc06602",
+    "source_tree_sha": null,
+    "policy_sha256_pinned_by_build_step": "463cd464924945f6aee922c434c131d3f92d6eb5a147be8f425c35048b479fa9",
+    "requirements_dev_lock_sha256_pinned_by_build_step": "126729051a9140794d999a015f08cac215f718233d9368cdb5c654acf7869b7d",
+    "requirements_lock_sha256_pinned_by_build_step": "f359c00d71cc45aab7ae2b7424abd1f4a794edd8c48b33b01445ddb0a24a73fc",
+    "pipeline_revision_bound_to_build": null
+  },
+  "verified_facts": [
+    "GitHub PR #6 head and Buildkite identify the exact source commit above.",
+    "GitHub reports commit status buildkite/aicg-trusted-gate=success targeting Build #5.",
+    "Buildkite reports the sandboxed step passed in 35 seconds with command exit status 0.",
+    "The step checks checkout SHA and clean tree, asserts pinned policy and lockfile hashes, then runs policy validation, aicg gate run, examples/scenarios.py, and aicg gate final.",
+    "The step checks evidence directories and summary presence/size and reports successful artifact upload; Buildkite showed 30 artifacts."
+  ],
+  "semantic_review": {
+    "result": "No authenticated independent Verifier report was established.",
+    "reason": "The target policy sets independent_verification_required to false. The pipeline executes PR-controlled application code and tests; it checks evidence-file presence and limits, but artifact contents could not be inspected to confirm internal source/policy bindings or a verifier decision.",
+    "artifacts_inspected": false
+  },
+  "authentication": {
+    "buildkite_status_observed_in_github": true,
+    "verifier_report_externally_authenticated": false,
+    "reviewer": "Codex subagent /root/independent_buildkite5_review; identity not externally authenticated",
+    "note": "A passing Buildkite status attests to configured job execution, not semantic safety or an independent verifier PASS."
+  },
+  "limitations": [
+    "No source-tree hash or Buildkite pipeline revision bound to this execution was available.",
+    "Uploaded evidence contents were not inspected.",
+    "This memo is not an AICG verifier report and was not imported into the final gate."
+  ]
+}
