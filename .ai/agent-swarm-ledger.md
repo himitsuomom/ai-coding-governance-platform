@@ -89,3 +89,9 @@ Residual trust boundary: Buildkite App connection, PR execution, and App-sourced
 | Agent | Single task | Exclusive scope | State | Result |
 |---|---|---|---|---|
 | `/root` | Require Buildkite's PR-specific status on protected `main` | Target branch required status contexts and App source; no application code | Complete, 2026-09-29 | Buildkite separates pull-request statuses from branch-push statuses ([GitHub integration docs](https://buildkite.com/docs/pipelines/source-control/github)). Build #7 passed `buildkite/aicg-trusted-gate/pr` on PR #6 head `dd2016218377406feb2bfceddce4dabf138a2cfd`; Actions run `36527298831` also passed. Updated protected `main` to require `gate` from App `15368` and `buildkite/aicg-trusted-gate/pr` from App `805657`, strict mode. Required approvals remain zero; admin enforcement and conversation resolution remain enabled. PR #6 merged as `16bcbc84b9e2aa079fd6247e32ce910f39d35d6a`; post-merge Actions run passed in 50 seconds. |
+
+## PR #10 required-context follow-up
+
+| Agent | Single task | Exclusive scope | State | Result |
+|---|---|---|---|---|
+| `/root` | Diagnose and record the missing Buildkite PR status on PR #10 | PR #10 status-context record and CI evidence | Complete, 2026-09-29 | Manual [Buildkite Build #11](https://buildkite.com/himitsuomom/aicg-trusted-gate/builds/11) passed in 39 seconds on head `a1e5bae02dc02ec82ab3f0bd0a25a948eb840e32`, but emitted only `buildkite/aicg-trusted-gate`; it does not satisfy protected `main`'s `buildkite/aicg-trusted-gate/pr` requirement. PR #10's synchronized-head status is the qualifying evidence and is checked before merge. |
