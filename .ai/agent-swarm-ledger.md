@@ -95,3 +95,9 @@ Residual trust boundary: Buildkite App connection, PR execution, and App-sourced
 | Agent | Single task | Exclusive scope | State | Result |
 |---|---|---|---|---|
 | `/root` | Diagnose and record the missing Buildkite PR status on PR #10 | PR #10 status-context record and CI evidence | Complete, 2026-09-29 | Manual [Buildkite Build #11](https://buildkite.com/himitsuomom/aicg-trusted-gate/builds/11) passed in 39 seconds on head `a1e5bae02dc02ec82ab3f0bd0a25a948eb840e32`, but emitted only `buildkite/aicg-trusted-gate`; it does not satisfy protected `main`'s `buildkite/aicg-trusted-gate/pr` requirement. PR #10's synchronized-head status is the qualifying evidence and is checked before merge. |
+
+## 2026-10-01 Stale CI-boundary documentation repair
+
+| Agent | Single task | Exclusive scope | State | Result |
+|---|---|---|---|---|
+| `/root` | Align public completion docs with the active trusted-CI checks | `README.md`, `docs/VALIDATION.md`, `.ai/known-issues/v1-boundaries.md`, and this ledger; read-only branch-protection and build verification | Complete | Replaced obsolete claims that Buildkite was unconnected and not required. The live `main` rule requires strict Actions `gate` and Buildkite `buildkite/aicg-trusted-gate/pr`; Buildkite App access is repository-scoped. Buildkite #12 passed on PR #10 and #13 passed after merge. The remaining boundary is explicit: the repository opts out of authenticated semantic verification, so the green gate proves configured execution only. |
