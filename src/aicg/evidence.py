@@ -1,5 +1,7 @@
 """Evidence schemas and current-source binding."""
 
+import base64
+import binascii
 import subprocess
 from datetime import UTC, datetime
 from pathlib import Path
@@ -68,7 +70,7 @@ class VerifierReport(StrictModel):
 
 class ExternalEvidence(Context):
     schema_version: Literal[1] = 1
-    kind: Literal["verifier", "runtime"]
+    kind: Literal["runtime"]
     producer: Literal["external"] = "external"
     reviewer: str = Field(min_length=1, max_length=200)
     recorded_at: str
@@ -82,6 +84,38 @@ class ExternalEvidence(Context):
         if not self.reviewer.strip():
             raise GovernanceError("reviewer required")
         return self
+
+
+class VerifierAttestation(Context):
+    schema_version: Literal[2] = 2
+    kind: Literal["verifier"] = "verifier"
+    producer: Literal["aicg-signed-verifier"] = "aicg-signed-verifier"
+    issuer: str = Field(min_length=1, max_length=200)
+    key_id: str = Field(pattern=r"^[a-f0-9]{64}$")
+    provider: str = Field(min_length=1, max_length=100)
+    model: str = Field(min_length=1, max_length=200)
+    request_hash: str = Field(pattern=r"^[a-f0-9]{64}$")
+    recorded_at: str
+    report: VerifierReport
+    signature: str = Field(min_length=1, max_length=128)
+
+    @model_validator(mode="after")
+    def valid_signature(self):
+        value = datetime.fromisoformat(self.recorded_at)
+        if value.tzinfo is None or value > datetime.now(UTC):
+            raise GovernanceError("verifier timestamp must be timezone-aware and not in the future")
+        try:
+            signature = base64.b64decode(self.signature, validate=True)
+        except (ValueError, binascii.Error) as exc:
+            raise GovernanceError("verifier signature must be base64 Ed25519 bytes") from exc
+        if len(signature) != 64:
+            raise GovernanceError("verifier signature must be 64 Ed25519 bytes")
+        return self
+
+
+def verifier_signing_bytes(payload: dict) -> bytes:
+    unsigned = {key: value for key, value in payload.items() if key != "signature"}
+    return b"aicg-verifier-attestation-v2\0" + json_bytes(unsigned)
 
 
 def git(root: Path, *args: str) -> bytes:

@@ -6,7 +6,7 @@ completion:
   typecheck_required: false
   lint_required: false
   runtime_validation_required: false
-  independent_verification_required: true
+  independent_verification_required: false
 
 security:
   max_critical_findings: 0

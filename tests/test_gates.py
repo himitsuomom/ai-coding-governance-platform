@@ -6,7 +6,7 @@ import pytest
 from conftest import configure, external
 
 from aicg.core import GovernanceError, read_json, write_json
-from aicg.evidence import ExternalEvidence
+from aicg.evidence import VerifierAttestation
 from aicg.gates import execute, final_gate, run_gates, run_lock
 from aicg.policy import load_policy
 from aicg.verifier import import_evidence, verifier_request
@@ -83,9 +83,9 @@ def test_security_fail_closed(repo, counts):
 def test_runtime_required(repo):
     policy = configure(repo, completion={"runtime_validation_required": True})
     run_gates(repo, policy)
-    external(repo)
-    assert final_gate(repo, policy)["status"] == "REJECT"
     external(repo, kind="runtime")
+    assert final_gate(repo, policy)["status"] == "REJECT"
+    external(repo)
     assert final_gate(repo, policy)["status"] == "PASS"
 
 
@@ -196,7 +196,7 @@ def test_external_contract_and_input(repo):
     data = json.loads(file.read_text())
     data["report"]["security_concerns"] = ["unresolved"]
     with pytest.raises(ValueError):
-        ExternalEvidence.model_validate(data)
+        VerifierAttestation.model_validate(data)
     data["report"]["status"] = "REPAIR_REQUIRED"
     file.write_text(json.dumps(data))
     with pytest.raises(GovernanceError):

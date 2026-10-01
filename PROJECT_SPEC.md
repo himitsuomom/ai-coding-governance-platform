@@ -364,16 +364,19 @@ Allowed statuses:
 - `HUMAN_REVIEW_REQUIRED`
 - `INSUFFICIENT_EVIDENCE`
 
-Verifier Provider自体はpluggableにする。
+Verifier Provider自体はpluggableにする。v1には汎用Provider interfaceと、継続無料枠で利用できるCloudflare Workers AI adapterを含める。特定商用APIの有料credentialは必須にしない。
 
-v1では最低限:
+Verifier reportをCIで独立Evidenceとして扱う場合、Ed25519署名付きattestationを必須にする。署名対象はissuer、key ID、run/policy/source binding、VerifierInput全体のSHA-256、model/provider識別子、reportを含むcanonical JSONとする。未署名のVerifier evidenceや不明な鍵はPASSにできない。Runtime evidenceの既存手動import形式は本要件の対象外。
 
-- manual evidence import
-- generic LLM verifier adapter interface
+信頼済みCIはPR変更可能なコードを実行せず、差分と必要なsourceだけをread-only dataとしてVerifierへ渡す。API tokenと署名秘密鍵は信頼済みVerifier stepだけに渡し、PR実行step・候補コード・artifactには渡さない。信頼済み公開鍵はPRで変更できないCI設定にもpinする。Provider障害、署名不正、日次無料枠超過はfail closedとする。
 
-を提供する。
+受け入れ条件:
 
-特定商用APIのcredentialを必須にしない。
+- reportが現在のrun、policy、source、完全なVerifierInputに結び付く。
+- 不明なissuer/key、署名欠落・改ざん・別runへの再利用、旧unsigned Verifier evidenceを拒否する。
+- PASS reportに未解決concernがあれば拒否する。
+- 外部CIは対象PRのプログラムやscriptを実行せずにreviewを行い、その信頼状態を必須statusとして報告する。
+- 無料枠切れとProvider/API障害ではVerifier PASSを発行しない。有料planへの自動切替をしない。
 
 ---
 
