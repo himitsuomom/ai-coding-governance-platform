@@ -1,5 +1,7 @@
 """Strict policy validation; no executable configuration loading."""
 
+import base64
+import binascii
 import shlex
 from pathlib import Path, PurePosixPath
 from typing import Literal, get_args, get_origin
@@ -101,6 +103,31 @@ class EvidencePaths(StrictModel):
         return self
 
 
+class VerifierTrust(StrictModel):
+    issuer: str | None = None
+    key: str | None = None
+    provider: str | None = None
+    model: str | None = None
+
+    @model_validator(mode="after")
+    def complete_trust(self):
+        values = (self.issuer, self.key, self.provider, self.model)
+        if any(value is not None for value in values) and not all(value for value in values):
+            raise GovernanceError("verifier issuer, public key, provider and model must be configured together")
+        if self.key is not None:
+            try:
+                raw = base64.b64decode(self.key, validate=True)
+            except (ValueError, binascii.Error) as exc:
+                raise GovernanceError("verifier public key must be base64-encoded Ed25519 bytes") from exc
+            if len(raw) != 32:
+                raise GovernanceError("verifier public key must be 32 Ed25519 bytes")
+        return self
+
+    @property
+    def configured(self) -> bool:
+        return all((self.issuer, self.key, self.provider, self.model))
+
+
 class Policy(StrictModel):
     version: Literal[1]
     completion: Completion
@@ -108,6 +135,7 @@ class Policy(StrictModel):
     human_approval: Approval
     commands: Commands
     evidence: EvidencePaths
+    verifier: VerifierTrust = Field(default_factory=VerifierTrust)
     adapters: list[Literal["codex", "openhands", "generic"]] = ["codex", "openhands", "generic"]
     timeout_seconds: int = Field(default=300, ge=1, le=86400)
     max_output_bytes: int = Field(default=1_000_000, ge=1024, le=10_000_000)
@@ -119,6 +147,8 @@ class Policy(StrictModel):
         for gate, required in self.required_commands().items():
             if required and not argv(getattr(self.commands, gate)):
                 raise GovernanceError(f"required command is empty: {gate}")
+        if self.completion.independent_verification_required and not self.verifier.configured:
+            raise GovernanceError("independent verification requires a trusted verifier issuer, key, provider and model")
         return self
 
     def required_commands(self) -> dict[str, bool]:

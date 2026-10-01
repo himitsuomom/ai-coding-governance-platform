@@ -7,3 +7,5 @@ Choose a small layered package, not a distributed orchestrator. Strings are pars
 Evidence is local JSON plus hashed logs and source fingerprints. Manual verifier import and a Python Protocol support independent providers without commercial credentials. No verifier credentials or model provider is bundled. Source fingerprints use Git tracked and untracked nonignored files, excluding .ai/evidence, .ai/runs and workflow state. Ignored files are outside the source snapshot; dependencies must be pinned separately.
 
 The source template directory was nonempty. Implementation uses sibling ai-coding-governance-platform-v1 without overwriting the template. CI remote execution and genuine human verification cannot be claimed from local test fixtures.
+
+See [ADR-0002](ADR-0002-authenticated-semantic-verifier.md) for the authenticated semantic-verifier extension.

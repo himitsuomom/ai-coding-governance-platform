@@ -12,7 +12,15 @@ from pathlib import Path
 from uuid import uuid4
 
 from aicg.core import GovernanceError, digest, read_json, safe_path, write_bytes, write_json
-from aicg.evidence import CommandEvidence, Context, Counts, ExternalEvidence, context, now
+from aicg.evidence import (
+    CommandEvidence,
+    Context,
+    Counts,
+    ExternalEvidence,
+    VerifierAttestation,
+    context,
+    now,
+)
 from aicg.policy import Policy, argv
 
 SECRET_NAME = re.compile(r"SECRET|TOKEN|PASSWORD|PASSWD|API_KEY|PRIVATE_KEY|CREDENTIAL", re.IGNORECASE)
@@ -193,8 +201,16 @@ def check_command(root: Path, policy: Policy, gate: str, binding: dict, manifest
     return evidence.model_dump()
 
 
-def check_external(root: Path, policy: Policy, gate: str, binding: dict) -> ExternalEvidence:
-    evidence = ExternalEvidence.model_validate(read_json(root, evidence_path(policy, gate)))
+def check_external(root: Path, policy: Policy, gate: str, binding: dict) -> ExternalEvidence | VerifierAttestation:
+    data = read_json(root, evidence_path(policy, gate))
+    evidence: ExternalEvidence | VerifierAttestation
+    if gate == "verifier":
+        evidence = VerifierAttestation.model_validate(data)
+        from aicg.verifier import verify_verifier_attestation
+
+        verify_verifier_attestation(root, policy, evidence)
+    else:
+        evidence = ExternalEvidence.model_validate(data)
     if evidence.kind != gate or any(getattr(evidence, key) != value for key, value in binding.items()):
         raise GovernanceError("external evidence context mismatch")
     return evidence

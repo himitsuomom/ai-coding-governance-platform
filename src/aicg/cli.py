@@ -11,10 +11,10 @@ from pydantic import BaseModel, ValidationError
 from aicg import __version__
 from aicg.adapters import compile_policy, doctor, generate_ci, init_repo
 from aicg.core import GovernanceError, workflow
-from aicg.evidence import CommandEvidence, ExternalEvidence
+from aicg.evidence import CommandEvidence, ExternalEvidence, VerifierAttestation
 from aicg.gates import exit_status, final_gate, redact, run_gates
 from aicg.policy import Policy, action_check, load_policy
-from aicg.verifier import VerifierInput, import_evidence, verifier_request
+from aicg.verifier import VerifierInput, import_evidence, run_verifier, verifier_request
 
 
 def parser() -> argparse.ArgumentParser:
@@ -39,8 +39,10 @@ def parser() -> argparse.ArgumentParser:
     approval.add_parser("check").add_argument("action")
     verifier = commands.add_parser("verifier").add_subparsers(dest="operation", required=True)
     verifier.add_parser("request")
+    verifier.add_parser("run")
     verifier.add_parser("import").add_argument("file", type=Path)
-    commands.add_parser("schema").add_argument("kind", choices=["policy", "command", "external", "verifier-input"])
+    commands.add_parser("schema").add_argument("kind", choices=["policy", "command", "external",
+                                                                  "verifier-input", "verifier-attestation"])
     return p
 
 
@@ -50,7 +52,7 @@ def dispatch(args) -> tuple[dict, int]:
         return init_repo(root), 0
     if args.command == "schema":
         models: dict[str, type[BaseModel]] = {"policy": Policy, "command": CommandEvidence, "external": ExternalEvidence,
-                 "verifier-input": VerifierInput}
+                 "verifier-input": VerifierInput, "verifier-attestation": VerifierAttestation}
         return models[args.kind].model_json_schema(), 0
     if args.command == "policy" and args.operation == "schema":
         return Policy.model_json_schema(), 0
@@ -70,8 +72,12 @@ def dispatch(args) -> tuple[dict, int]:
         result = action_check(policy, args.action)
         return result, exit_status(result)
     if args.command == "verifier":
-        return (verifier_request(root, policy) if args.operation == "request"
-                else import_evidence(root, policy, args.file)), 0
+        if args.operation == "request":
+            return verifier_request(root, policy), 0
+        if args.operation == "run":
+            result = run_verifier(root, policy)
+            return result, exit_status({"status": result["report_status"]})
+        return import_evidence(root, policy, args.file), 0
     result = (run_gates(root, policy, args.dry_run) if args.operation == "run" else final_gate(root, policy))
     return result, 0 if result.get("dry_run") else exit_status(result)
 

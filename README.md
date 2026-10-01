@@ -1,10 +1,10 @@
 # AI Coding Governance Platform
 
-`aicg` is a local, model-independent governance CLI for AI coding repositories. It compiles canonical policy into agent instructions, runs configured checks, records evidence, and makes deterministic final decisions. It does not call an LLM or deploy production systems.
+`aicg` is a local, model-independent governance CLI for AI coding repositories. It compiles canonical policy into agent instructions, runs configured checks, records evidence, and makes deterministic final decisions. Its optional Semantic Verifier calls Cloudflare Workers AI and emits signed, request-bound evidence; it does not deploy production systems.
 
 ## Install
 
-Python 3.12+ on macOS or Linux. No paid API is required.
+Python 3.12+ on macOS or Linux. Mechanical checks require no API. Semantic verification needs a Cloudflare Workers AI account and token; its Free plan currently has a recurring daily allocation and rejects requests after quota instead of billing unless the account is upgraded. [Current pricing](https://developers.cloudflare.com/workers-ai/platform/pricing/).
 
 ```sh
 python -m venv .venv
@@ -29,7 +29,9 @@ aicg doctor
 aicg gate run --dry-run
 aicg gate run
 aicg verifier request > .ai/runs/verifier-input.json
-# Have an independent reviewer/provider produce a context-bound report.
+# Or, in a configured trusted environment, run the signed Workers AI verifier.
+aicg verifier run
+# External verifier imports must be Ed25519-signed and request-bound.
 aicg verifier import /outside/repository/verifier-report.json
 aicg gate final
 ```
@@ -82,27 +84,27 @@ Failures take precedence over requests for human review. A model's self-assessme
 
 `aicg verifier request` exports the requirement, acceptance criteria, architecture/security/testing/invariant documents, command evidence, Git staged/unstaged diff, and a full bounded source snapshot. Clean CI checkouts and untracked files are included. Binary files are base64 encoded; snapshots exceeding 20 MB are rejected rather than silently truncated. Treat this bundle as confidential source material and send it only to an approved reviewer/provider.
 
-External reports require the exact `run_id`, `policy_hash` and `source_hash` from that request. They also contain `schema_version: 1`, `kind: verifier` (or runtime), `producer: external`, `reviewer`, timezone-aware `recorded_at`, and a `report` object. See [verifier/CONTRACT.md](verifier/CONTRACT.md) and exported JSON schemas. Conflicting reports for the same run are refused; start a new run for a new review.
+Verifier evidence uses `schema_version: 2` and an Ed25519 signature over issuer/key ID, provider/model, report, current run/policy/source hashes, and a digest of the complete request including gate evidence. Unsigned legacy verifier JSON is rejected. Runtime evidence remains `schema_version: 1`. A required verifier policy must configure the trusted issuer, base64 public key, provider and model together. See [verifier/CONTRACT.md](verifier/CONTRACT.md).
 
-The Python `VerifierProvider` Protocol supports generic LLM or human integrations without choosing a vendor. This v1 ships manual import and the interface, not a commercial provider implementation. Tests and examples use explicitly labeled fixture reports; those never verify this project's readiness.
+The Python `VerifierProvider` Protocol keeps providers pluggable. This v1 ships a Cloudflare Workers AI adapter for `@cf/google/gemma-4-26b-a4b-it`; request/response size, timeout and output schema are bounded. Set `CLOUDFLARE_ACCOUNT_ID`, `CLOUDFLARE_API_TOKEN`, and base64 `AICG_VERIFIER_PRIVATE_KEY` only in a trusted verifier process. Tests and examples use fixture reports; those never verify this project's readiness.
 
-Hashes detect stale/altered evidence; they are not signatures. A local writer can forge all files or change the CLI. Manual import records a claimed reviewer identity, not authenticated independence. Enforce adversarial separation through protected CI workflows, independent reviewer storage and branch protection. The CLI never claims that mutable local files alone prevent an adversarial agent from bypassing governance.
+Signatures authenticate the configured verifier key and exact request, not the correctness of a model's judgment. A local writer can change the CLI or policy. The trust key used by CI must also be pinned in protected external configuration that PRs cannot change. Never expose the provider token or private signing key to PR-controlled programs or artifacts; the review step reads source as data and does not execute it.
 
 ## Other commands
 
 - `aicg workflow show` / `aicg workflow transition SPECIFY`: persist and validate workflow transitions. State tracks progress; it cannot replace final evidence checks.
 - `aicg approval check production_deploy`: classify an action; never execute it. Unknown actions require review. No production executor exists.
 - `aicg doctor`: check Git, policy, required documents/directories, command executables, evidence writability, generated instructions and CI. It does not execute commands or prove their correctness.
-- `aicg schema policy|command|external|verifier-input`: export JSON Schema.
+- `aicg schema policy|command|external|verifier-input|verifier-attestation`: export JSON Schema.
 - `aicg ci generate github`: generate GitHub Actions integration that follows the verifier requirement in `policy.yaml`.
 
 ## GitHub Actions
 
 Generated consumer workflows require the repository variable `AICG_INSTALL_SPEC` to point at a trusted immutable wheel URL or pinned package source. No registry release is assumed. Review installation inputs and configure the project's build dependencies before gate execution.
 
-When `independent_verification_required` is true, integrate a trusted verifier after request export and before `gate final`; missing current-run evidence fails closed. When false, the final gate checks configured mechanical requirements only. This repository uses that mode because no trusted reviewer/provider identity is available. Its protected `main` requires the `gate` status and no PR approval. A green run proves configured checks passed, not independent review or production readiness. Never grant secrets to untrusted pull-request jobs. The template runs on pushes and pull requests, uses read-only repository permissions, and uploads evidence with `always()`.
+When `independent_verification_required` is true, configure the trust key in protected external CI, then run/import a signed report before `gate final`. Missing or invalid current-request evidence fails closed. When false, the final gate checks configured mechanical requirements only. This repository keeps that setting false until the Cloudflare token, signing key and isolated Buildkite verifier step are configured. Its protected `main` currently requires mechanical GitHub and Buildkite checks with no PR approval. A green run proves configured checks passed, not independent review or production readiness. Never grant secrets to PR-controlled jobs.
 
-This repository runs clean installation, policy validation, all configured gates, example scenarios and dependency audit in GitHub Actions. `policy.yaml` requires build, tests, typecheck, lint, security and runtime validation; it does not require a separate verifier. Branch protection requires the `gate` check. Check the Actions page for current run evidence.
+This repository runs clean installation, policy validation, all configured gates, example scenarios and dependency audit in GitHub Actions. `policy.yaml` requires build, tests, typecheck, lint, security and runtime validation; it does not yet require a separate verifier. Check the Actions page for current run evidence.
 
 ## Validation
 
@@ -116,6 +118,6 @@ python -m pip_audit -r requirements.lock --strict --disable-pip --no-deps
 python examples/scenarios.py
 ```
 
-The dependency audit's `--no-deps` mode is used only with the fully resolved lock file; every transitive runtime dependency is present. Six example scenarios run real subprocesses in temporary Git repositories: all-pass, build-fail, test-fail, missing-verifier, verifier-reject and security-threshold-fail. The scanner and reviewer payloads in examples are test fixtures, not production scan results.
+The dependency audit's `--no-deps` mode is used only with the fully resolved lock file; every transitive runtime dependency is present. Tests cover all-pass, build-fail, test-fail, missing/unsigned/tampered verifier, request replay, provider errors and security-threshold-fail. Scanner and signed reports in tests are fixtures, not production scan results.
 
-See [`.ai/agent-swarm-ledger.md`](.ai/agent-swarm-ledger.md) for persistent task assignments and `docs/VALIDATION.md` for the validation procedure and completion boundaries. Generated evidence under `.ai/evidence/` and `.ai/runs/` is gitignored, so clean clones do not contain local run logs. Protected `main` requires strict `gate` from GitHub Actions App `15368` and `buildkite/aicg-trusted-gate/pr` from Buildkite App `805657`; pull requests must be up to date, admins cannot bypass the rule, conversations must be resolved, and force-push/deletion are disabled. Required human approvals remain zero by repository choice. The Buildkite App is installed with access limited to this repository. [Buildkite Build #12](https://buildkite.com/himitsuomom/aicg-trusted-gate/builds/12) passed on PR #10's head, and [Build #13](https://buildkite.com/himitsuomom/aicg-trusted-gate/builds/13) passed after merge to `main` at `0069865`. This separate status prevents a PR from bypassing the required checks by changing its Actions workflow alone. It remains a mechanical execution gate: PR-controlled application and test code run without network access or secrets, so a green status is not authenticated semantic review and cannot prove the code benign. This repository sets `independent_verification_required: false`. See [v1 boundaries](.ai/known-issues/v1-boundaries.md). Windows is outside v1 support because locking/process-group handling use POSIX facilities.
+See [`.ai/agent-swarm-ledger.md`](.ai/agent-swarm-ledger.md) for persistent task assignments and `docs/VALIDATION.md` for the validation procedure and completion boundaries. Generated evidence under `.ai/evidence/` and `.ai/runs/` is gitignored. Protected `main` requires strict GitHub Actions `gate` and Buildkite `buildkite/aicg-trusted-gate/pr` checks, with no PR approvals. The Buildkite App is installed with access limited to this repository. The current Buildkite status is a mechanical execution gate: PR-controlled application and test code run without network access or secrets, so it is not authenticated semantic review and cannot prove code benign. Signed verifier support and a free-tier Cloudflare adapter are implemented, but live Buildkite secret isolation and semantic status have not yet been activated. This repository keeps `independent_verification_required: false` until that setup passes. See [v1 boundaries](.ai/known-issues/v1-boundaries.md). Windows is outside v1 support because locking/process-group handling use POSIX facilities.
