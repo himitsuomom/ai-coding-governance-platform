@@ -16,20 +16,20 @@ def main() -> int:
     try:
         report = json.loads(result.stdout)
         if not isinstance(report, dict):
-            raise ValueError("missing Bandit report object")
+            raise TypeError("missing Bandit report object")
         errors = report.get("errors")
         metrics = report.get("metrics")
         if not isinstance(errors, list) or errors or not isinstance(metrics, dict):
             raise ValueError("missing or failed Bandit scan metadata")
         totals = metrics.get("_totals")
         if not isinstance(totals, dict):
-            raise ValueError("missing Bandit scan totals")
+            raise TypeError("missing Bandit scan totals")
         loc = totals.get("loc")
         if not isinstance(loc, int) or isinstance(loc, bool) or loc <= 0:
             raise ValueError("no valid lines of code scanned")
         findings = report.get("results")
         if not isinstance(findings, list):
-            raise ValueError("missing Bandit findings list")
+            raise TypeError("missing Bandit findings list")
         high = 0
         for finding in findings:
             if not isinstance(finding, dict) or finding.get("issue_severity") not in {
