@@ -25,7 +25,7 @@ def main() -> int:
         if not isinstance(totals, dict):
             raise ValueError("missing Bandit scan totals")
         loc = totals.get("loc")
-        if type(loc) is not int or loc <= 0:
+        if not isinstance(loc, int) or isinstance(loc, bool) or loc <= 0:
             raise ValueError("no valid lines of code scanned")
         findings = report.get("results")
         if not isinstance(findings, list):
