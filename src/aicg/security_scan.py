@@ -15,10 +15,29 @@ def main() -> int:
         return 2
     try:
         report = json.loads(result.stdout)
-        if report.get("errors") or not report.get("metrics", {}).get("_totals", {}).get("loc", 0):
-            raise ValueError("scan incomplete")
-        findings = report["results"]
-        print(json.dumps({"critical": 0, "high": sum(item["issue_severity"] == "HIGH" for item in findings)}))
+        if not isinstance(report, dict):
+            raise ValueError("missing Bandit report object")
+        errors = report.get("errors")
+        metrics = report.get("metrics")
+        if not isinstance(errors, list) or errors or not isinstance(metrics, dict):
+            raise ValueError("missing or failed Bandit scan metadata")
+        totals = metrics.get("_totals")
+        if not isinstance(totals, dict):
+            raise ValueError("missing Bandit scan totals")
+        loc = totals.get("loc")
+        if type(loc) is not int or loc <= 0:
+            raise ValueError("no valid lines of code scanned")
+        findings = report.get("results")
+        if not isinstance(findings, list):
+            raise ValueError("missing Bandit findings list")
+        high = 0
+        for finding in findings:
+            if not isinstance(finding, dict) or finding.get("issue_severity") not in {
+                "LOW", "MEDIUM", "HIGH"
+            }:
+                raise ValueError("invalid Bandit finding severity")
+            high += finding["issue_severity"] == "HIGH"
+        print(json.dumps({"critical": 0, "high": high}))
     except (ValueError, KeyError, TypeError):
         print("Invalid or incomplete Bandit report", file=sys.stderr)
         return 2
