@@ -16,6 +16,8 @@ aicg --help
 
 For distribution, run `python -m build --wheel --no-isolation` and install the resulting wheel. Runtime dependencies are pinned in `requirements.lock`; development and validation dependencies are pinned in `requirements-dev.lock`. The package is not published to a registry by this task.
 
+For coordinated Codex/Warp use and evidence-based PR handoffs, see [Codex + Warp evidence workflow](docs/CODEX_WARP_EVIDENCE_WORKFLOW.md).
+
 ## Quickstart in another repository
 
 ```sh
