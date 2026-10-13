@@ -30,4 +30,4 @@
 - [ ] Required checks are current for the PR head and externally enforced; otherwise state what is unverified.
 - [ ] Human reviewer approves merge only after inspecting the evidence.
 
-Guidance: [Codex + Warp evidence workflow](../docs/CODEX_WARP_EVIDENCE_WORKFLOW.md). Agent self-assessment and a manually typed `PASS` do not replace objective evidence.
+Guidance: `docs/CODEX_WARP_EVIDENCE_WORKFLOW.md` in this repository. Agent self-assessment and a manually typed `PASS` do not replace objective evidence.
