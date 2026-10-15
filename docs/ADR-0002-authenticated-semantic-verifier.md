@@ -1,6 +1,6 @@
 # ADR-0002: authenticated semantic verifier
 
-Status: proposed.
+Status: accepted. External activation remains pending.
 
 ## Context
 
